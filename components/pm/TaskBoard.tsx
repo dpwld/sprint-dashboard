@@ -138,7 +138,7 @@ export function TaskBoard({
       className="sx-board-swipe"
       ref={boardRef}
       onDragOverCapture={(e) => autoScrollAt(e.clientX, e.clientY, e.target)}
-      style={{ display: "flex", gap: 16, height: "100%", minHeight: 0, alignItems: "stretch" }}
+      style={{ display: "flex", gap: 16, width: "100%", minWidth: 0, height: "100%", minHeight: 0, overflowX: "auto", overflowY: "hidden", alignItems: "stretch" }}
     >
       {STATUS_ORDER.map((status) => {
         const items = tasks.filter((t) => t.status === status).sort(compareTasks);

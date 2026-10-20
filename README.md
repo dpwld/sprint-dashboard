@@ -4,13 +4,13 @@ A private web service for projects, tasks, daily logs and deadlines, preserving 
 
 [Requirements](#prerequisites-and-your-data) · [Quickstart](#local-setup) · [Workflows](#workflows) · [Architecture](#architecture-and-verification) · [Feature inventory](docs/FEATURE-PARITY.md)
 
-![Sprint workspace running with an empty database](docs/images/overview.png)
+![Sprint workspace example screen](docs/images/overview.png)
 
-*Actual running service before the first project. Tasks and project rollups come from your saved records.*
+*Actual local service with fictional demonstration data for the example screenshots. Project rollups come from saved D1 records; no company records or real contacts are shown.*
 
 ## Prerequisites and your data
 
-The database starts empty. No company accounts, employees, project records, credentials or sample data are included.
+The runtime database starts empty. No company accounts, employees, project records or credentials are included. The README screenshot dataset is fictional and is created only by an explicitly run local helper; installation and deployment never seed it.
 
 | Requirement | Required for | Setup |
 |---|---|---|
@@ -49,6 +49,16 @@ npm run dev -- --port 4314
 Use the printed loopback URL and the development sign-in flow. The Sites starter’s mock sign-in is local only. `npm start -- --port 4314` runs the built Worker with local D1/R2 but does not itself simulate sign-in. Both modes persist local storage under `.wrangler/state`. Hosted D1 is a separate database; Sites applies committed migrations at deployment.
 
 After changing `db/schema.ts`, run `npm run db:generate`, review the generated migration and apply it with `npm run db:migrate`. Normal setup uses the committed migrations.
+
+To reproduce the populated example screens, keep the local preview running on port 4314 and run:
+
+```sh
+node scripts/screenshot-fixture.mjs seed
+# Capture Engineering → Diagram or Board, then remove only the created records:
+node scripts/screenshot-fixture.mjs cleanup
+```
+
+The helper is fixed to `http://127.0.0.1:4314`, rejects redirects and uses the actual authenticated API/D1. It creates three fictional projects, 15 tasks, four directory members, six daily logs and three comments. Names are invented and emails use reserved `.example` domains. The created IDs are recorded in ignored `.wrangler/screenshot-fixture.json`; cleanup uses only that list and preserves unrelated records. It never calls email, AI or other external integrations. Keep the manifest until cleanup is complete.
 
 ## Workflows
 

@@ -44,7 +44,7 @@ const PM_TEAMS: { key: PmTeam; label: string }[] = [
   { key: "business", label: "Business" },
 ];
 
-export function SprintWorkspace() {
+export function SprintWorkspace({ translation }: { translation: { ready: boolean; required: string[] } }) {
   const me = useCurrentUser();
   // Directory members resolve to u-* keys (currentUser DIRECTORY); externals get ext-*.
   const meKey = me.id;
@@ -73,6 +73,7 @@ export function SprintWorkspace() {
     return saved === "en" ? "en" : "ko";
   });
   const [i18n, setI18n] = useState<PmI18nRow[]>([]);
+  const translationBlocked = useRef(false);
   const [drawerTaskId, setDrawerTaskId] = useState<string | null>(null);
   const [drawerProjectId, setDrawerProjectId] = useState<string | null>(null);
   // 태스크 드로어를 프로젝트 드로어에서 열었을 때의 "뒤로" 목적지.
@@ -185,8 +186,12 @@ export function SprintWorkspace() {
   }
 
   function switchLang(next: PmLang) {
+    translationBlocked.current = false;
     setLang(next);
     try { window.localStorage.setItem("pm.lang", next); } catch { /* private mode */ }
+    if (!translation.ready) {
+      setToast({ tone: "danger", title: "Translate", text: `Translation setup required: configure your own ${translation.required.join(", ")} as server environment variables. INTEGRATION_OWNER_ID must match your signed-in user ID. Original text remains visible.` });
+    }
   }
 
   // 번역 캐시 로드 (1회)
@@ -227,7 +232,7 @@ export function SprintWorkspace() {
   // 제목·프로젝트명(kind task/project) + 체크리스트·설명(kind text)을 100개씩
   // 나눠 요청해 API 상한(200)에 걸려 일부만 번역되는 일이 없게 한다.
   useEffect(() => {
-    if (loading) return;
+    if (loading || !translation.ready || translationBlocked.current) return;
     const pending: { id: string; kind: "task" | "project"; text: string }[] = [];
     for (const t of tasks) {
       if (!needsTranslation(t.title, lang)) continue;
@@ -271,7 +276,10 @@ export function SprintWorkspace() {
             body: JSON.stringify({ target: lang, items: chunk.map((x) => ({ id: x.id, text: x.source })) }),
           });
           const json = await res.json() as {detail?:string;error?:string;items?:{id:string;text:string}[];assignments?:{taskId:string;projectId:string}[]};
-          if (!res.ok) throw new Error(json.detail || json.error || `HTTP ${res.status}`);
+          if (!res.ok) {
+            if (res.status === 503) translationBlocked.current = true;
+            throw new Error(json.detail || json.error || `HTTP ${res.status}`);
+          }
           for (const it of json.items ?? []) translated.set(String(it.id), String(it.text ?? ""));
           if (cancelled) return;
         }
@@ -298,6 +306,7 @@ export function SprintWorkspace() {
           ...rows,
         ]);
       } catch (err) {
+        if (cancelled) return;
         console.error("pm translate failed:", err);
         setToast({ tone: "danger", title: "Translate", text: err instanceof Error ? err.message : "Translation failed" });
       }
@@ -305,7 +314,7 @@ export function SprintWorkspace() {
     return () => { cancelled = true; };
     // i18nMap/textTrMap은 자체 갱신 결과라 의존성에서 제외 (재귀 방지 — pending 산출에만 사용)
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [lang, loading, tasks, projects]);
+  }, [lang, loading, tasks, projects, translation.ready]);
 
   // 현재 팀 파티션 — 모든 뷰/폼은 이 목록만 본다 (드로어 조회는 전체 유지).
   // lang 토글이 켜져 있으면 제목·프로젝트명을 번역본으로 치환해 뷰에 전달
@@ -747,7 +756,7 @@ export function SprintWorkspace() {
   }
 
   return (
-    <div className="sx-sprint" style={{ flex: 1, minHeight: 0, display: "flex", flexDirection: "column", padding: 24, gap: 12 }}>
+    <div className="sx-sprint" style={{ flex: 1, minWidth: 0, minHeight: 0, display: "flex", flexDirection: "column", padding: 24, gap: 12 }}>
       {/* Header: team partition tabs + actions (projects are the organizing unit now) */}
       <div className="sx-sprint-toolbar" style={{ display: "flex", alignItems: "center", gap: 12, flexWrap: "wrap" }}>
         {mobile ? (
@@ -836,7 +845,7 @@ export function SprintWorkspace() {
       />
 
       )}
-      <div key={view} className="sx-anim-view sx-sprint-content" style={{ flex: 1, minHeight: 0 }}>
+      <div key={view} className="sx-anim-view sx-sprint-content" style={{ flex: 1, minWidth: 0, minHeight: 0 }}>
         {view === "list" && <MobileTaskList tasks={activeTasks} projects={teamProjects} meKey={meKey} onOpen={openTask} />}
         {view === "diagram" && (
           <DiagramView
