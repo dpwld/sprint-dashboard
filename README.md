@@ -1,10 +1,10 @@
-# Paceboard
+# Sprint Dashboard
 
-Paceboard is a private web service for projects, tasks, daily logs and deadlines, with eight connected views and a monochrome interface.
+Sprint Dashboard is a private web service for projects, tasks, daily logs and deadlines, with eight connected views and a monochrome interface.
 
 [Requirements](#prerequisites-and-your-data) · [Quickstart](#local-setup) · [Workflows](#workflows) · [Architecture](#architecture-and-verification) · [Feature inventory](docs/FEATURE-PARITY.md)
 
-![Paceboard example screen](docs/images/overview.png)
+![Sprint Dashboard example screen](docs/images/overview.png)
 
 *Actual local service with fictional demonstration data for the example screenshots. Project rollups come from saved D1 records; no company records or real contacts are shown.*
 
@@ -33,9 +33,9 @@ Configure secrets only in deployment server environment variables. For local dev
 | Member directory | Full name, email; optional team and job title. This is a directory, not an invitation or shared login |
 | Daily log | Task/project, valid calendar date, nonempty text |
 | Attachments | Files up to 20 MB. Images display inline; other formats download |
-| Grantory handoff (formerly Grants) | `/import/grant?payload=` base64url UTF-8 JSON: `title`, `grantId`; optional `description`, `dueDate`, `priority` (`urgent/high/medium/low`), `sourceUrl` (HTTP/S) |
+| Grant Project handoff (formerly Grants) | `/import/grant?payload=` base64url UTF-8 JSON: `title`, `grantId`; optional `description`, `dueDate`, `priority` (`urgent/high/medium/low`), `sourceUrl` (HTTP/S) |
 
-There is no CSV/XLSX import endpoint. The Grantory handoff is an authenticated review screen and creates a task only after confirmation. Repeating the same grant ID returns the existing task for that user.
+There is no CSV/XLSX import endpoint. The Grant Project handoff is an authenticated review screen and creates a task only after confirmation. Repeating the same grant ID returns the existing task for that user.
 
 ## Local setup
 

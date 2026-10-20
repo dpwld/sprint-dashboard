@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "Paceboard",
+  title: "Sprint Dashboard",
   description: "Projects, tasks, daily logs and connected work in your private workspace.",
   other: {
     "codex-preview": "development",

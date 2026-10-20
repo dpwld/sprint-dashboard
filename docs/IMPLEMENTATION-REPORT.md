@@ -1,4 +1,4 @@
-# Paceboard implementation report
+# Sprint Dashboard implementation report
 
 ## Delivered implementation
 
