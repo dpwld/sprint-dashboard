@@ -1,0 +1,5 @@
+import {context,failure} from '@/lib/server/context';
+import {drive} from '@/lib/server/integrations';
+import {driveFolderId} from '@/lib/server/drive-id';
+import {ServiceError} from '@/lib/server/store';
+export async function GET(request:Request){try{const {store,env}=await context(request);const folder=driveFolderId(new URL(request.url).searchParams.get('folder')??'');if(!folder)throw new ServiceError(400,'Invalid Google Drive folder ID');const params=new URLSearchParams({q:`'${folder}' in parents and trashed = false`,fields:'files(id,name,mimeType,webViewLink,modifiedTime),nextPageToken',pageSize:'100',orderBy:'folder,name'});const files:Record<string,unknown>[]=[];let next='';do{if(next)params.set('pageToken',next);const result=await drive(env,store,`files?${params}`);files.push(...result.files);next=result.nextPageToken??'';}while(next);const meta=await drive(env,store,`files/${folder}?fields=id,name`);return Response.json({items:files.map(f=>({...f,isFolder:f.mimeType==='application/vnd.google-apps.folder'})),path:[meta]});}catch(e){return failure(e);}}
