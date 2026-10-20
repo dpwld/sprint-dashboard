@@ -6,9 +6,9 @@ Sprint Dashboard is a web service for projects, tasks, daily logs and deadlines,
 
 [Requirements](#prerequisites-and-your-data) · [Quickstart](#local-setup) · [Workflows](#workflows) · [Architecture](#architecture-and-verification) · [Feature inventory](docs/FEATURE-PARITY.md)
 
-![Sprint Dashboard example screen](docs/images/overview.png)
+![Sprint Dashboard Diagram — projects, tasks and priorities](docs/images/diagram.jpg)
 
-*Actual local service with fictional demonstration data for the example screenshots. Project rollups come from saved D1 records; no company records or real contacts are shown.*
+*Diagram view in the actual local service, with fictional demonstration data. Project rollups come from saved D1 records; no company records or real contacts are shown.*
 
 ## Prerequisites and your data
 
@@ -49,7 +49,7 @@ npm run setup
 npm run dev -- --port 4314
 ```
 
-Local setup needs no ChatGPT account or paid API keys. The repository is currently private, so cloning requires access. `npm run setup` builds the service and applies committed local migrations without seeding data. See [Installation](docs/INSTALLATION.md), [Self-hosting in your own Cloudflare account](docs/SELF-HOSTING.md), and [Contributing](CONTRIBUTING.md).
+Local setup needs no ChatGPT account or paid API keys. `npm run setup` builds the service and applies committed local migrations without seeding data. See [Installation](docs/INSTALLATION.md), [Self-hosting in your own Cloudflare account](docs/SELF-HOSTING.md), and [Contributing](CONTRIBUTING.md).
 
 
 Use the printed loopback URL and the development sign-in flow. The Sites starter’s mock sign-in is local only. `npm start -- --port 4314` runs the built Worker with local D1/R2 but does not itself simulate sign-in. Both modes persist local storage under `.wrangler/state`. Hosted D1 is a separate database; Sites applies committed migrations at deployment.

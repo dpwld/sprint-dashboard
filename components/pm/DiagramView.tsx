@@ -583,25 +583,13 @@ export function DiagramView({
           ]}
           style={{ width: 180 }}
         />
+        <Button variant="ghost" size="sm" leftIcon={<Plus size={15} />} onClick={onNewProject}>
+          Project
+        </Button>
       </div>
       {/* masonry(컬럼별 제각각 흐름) 대신 행 그리드 — 각 줄의 블록 높이가
           정렬돼 통일감이 생긴다 (짧은 블록은 아래 공백 허용). */}
       <div className="sx-diagram-cols" style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(300px, 1fr))", gap: 20, alignItems: "stretch" }}>
-      {/* "+ 프로젝트" 타일 — 컬럼 흐름의 첫 카드 */}
-      <div style={{ minWidth: 0 }}>
-        <button
-          type="button"
-          onClick={onNewProject}
-          style={{
-            display: "inline-flex", alignItems: "center", gap: 8,
-            background: "transparent", border: "1.5px dashed var(--border-default)",
-            borderRadius: 11, padding: "9px 16px", cursor: "pointer",
-            color: "var(--text-muted)", fontSize: "var(--text-sm)", fontWeight: 500,
-          }}
-        >
-          <Plus size={15} /> Project
-        </button>
-      </div>
       {visibleProjects.map((p) => {
         const children = shownTasks.filter((t) => t.projectId === p.id);
         // 진척도는 필터(Hide done·멤버)와 무관한 실제 값 — 드로어의 done/total과 항상 일치한다.
