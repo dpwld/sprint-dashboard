@@ -60,3 +60,6 @@ next-env.d.ts
 !.env.example
 *.tsbuildinfo
 .tests-*
+
+# Own-account deployment settings and generated Wrangler config.
+/.deploy/

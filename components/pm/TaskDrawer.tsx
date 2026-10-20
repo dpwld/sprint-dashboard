@@ -351,7 +351,8 @@ function TaskDrawerInner({
           <PropLabel icon={<Flag size={13} />}>Priority</PropLabel>
           <Select
             size="sm"
-            className="sx-ghost"
+            className="sx-ghost sx-priority-select"
+            aria-label="Priority"
             value={task.priority}
             options={PRIORITY_ORDER.map((p) => ({ value: p, label: PRIORITY_LABEL[p] }))}
             onChange={(e: React.ChangeEvent<HTMLSelectElement>) => onPatch(task.id, { priority: e.target.value as PmPriority })}
@@ -447,7 +448,7 @@ function TaskDrawerInner({
           <Input
             size="sm"
             className="sx-ghost"
-            placeholder="어느 수준이면 끝인가 — e.g. 데이터 정리까지? 원인 분석까지?"
+            placeholder="What counts as complete — organized data, analyzed causes, or a reviewed result?"
             value={criteria}
             onChange={(e: React.ChangeEvent<HTMLInputElement>) => setCriteria(e.target.value)}
             onBlur={() => { if (criteria !== (task.doneCriteria ?? "")) onPatch(task.id, { doneCriteria: criteria }); }}

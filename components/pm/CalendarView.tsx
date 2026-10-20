@@ -7,10 +7,11 @@ import { EmptyState } from "@/components/ds/feedback/EmptyState";
 import type { PmProject, PmTask } from "@/types/domain";
 import { pmToday } from "@/lib/data/pm";
 import { PRIORITY_COLOR, PRIORITY_LABEL } from "./pmFormat";
+import { PriorityBadge } from "./PriorityBadge";
 
 /* 캘린더 뷰 — 노션식 월 달력. 태스크는 시작일~마감일을 잇는 "연속 바"로
    주 단위로 이어 그려지고(주가 바뀌면 다음 줄로 이어짐, 이어지는 쪽 모서리는
-   각지게), 바 색은 우선순위(urgent 빨강 / high 주황 / medium 파랑 / low 초록).
+   각지게), 바 색은 우선순위(urgent 빨강 / high 주황 / medium 노랑 / low 파랑).
    태스크가 많아지면 그 주의 행 높이가 자동으로 늘어나 전부 보인다.
    바 클릭 = 태스크 드로어. */
 
@@ -122,12 +123,9 @@ export function CalendarView({
       <div style={{ display: "flex", alignItems: "center", gap: 8, flexShrink: 0 }}>
         <span style={{ fontSize: "var(--text-lg)", fontWeight: 700, color: "var(--text-strong)" }}>{monthLabel}</span>
         {/* 우선순위 색 범례 */}
-        <span style={{ display: "inline-flex", alignItems: "center", gap: 10, marginLeft: 10 }}>
+        <span style={{ display: "inline-flex", alignItems: "center", gap: 6, marginLeft: 10 }}>
           {(["urgent", "high", "medium", "low"] as const).map((p) => (
-            <span key={p} style={{ display: "inline-flex", alignItems: "center", gap: 4, fontSize: "var(--text-2xs)", color: "var(--text-muted)" }}>
-              <span style={{ width: 8, height: 8, borderRadius: 3, background: PRIORITY_COLOR[p] }} />
-              {PRIORITY_LABEL[p]}
-            </span>
+            <PriorityBadge key={p} priority={p} />
           ))}
         </span>
         <span style={{ flex: 1 }} />
@@ -228,7 +226,7 @@ export function CalendarView({
                     }}
                   >
                     {/* 주가 바뀌어 이어지는 조각에도 제목을 반복 — 없으면 무슨 태스크인지 알 수 없다 */}
-                    {seg.task.title}
+                    {PRIORITY_LABEL[seg.task.priority]} · {seg.task.title}
                   </button>
                 );
               })}

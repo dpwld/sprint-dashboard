@@ -11,7 +11,8 @@ import { Button } from "@/components/ds/core/Button";
 import { EmptyState } from "@/components/ds/feedback/EmptyState";
 import type { PmProject, PmTask } from "@/types/domain";
 import { TEAM_MEMBERS } from "@/lib/mock/team";
-import { STATUS_LABEL, STATUS_TONE, PRIORITY_DOT, PRIORITY_LABEL, dday, compareTasks, rollup } from "./pmFormat";
+import { STATUS_LABEL, STATUS_TONE, PRIORITY_DOT, dday, compareTasks, rollup } from "./pmFormat";
+import { PriorityBadge } from "./PriorityBadge";
 import { UserAvatar } from "@/components/common/UserAvatar";
 import { unmetSprintRules } from "@/lib/data/pm";
 
@@ -92,7 +93,6 @@ export function DiagramView({
   onReorderProject,
   onAutoAssign,
   autoAssignBusy,
-  tr,
 }: {
   projects: PmProject[];
   tasks: PmTask[];
@@ -110,8 +110,6 @@ export function DiagramView({
   /** misc.(무소속) 태스크를 AI가 어울리는 프로젝트로 배분. */
   onAutoAssign?: () => void;
   autoAssignBusy?: boolean;
-  /** 표시 언어 번역(렌더 전용) — 체크리스트 항목 등에 적용, 저장 데이터는 원문. */
-  tr?: (text: string) => string;
 }) {
   const [collapsed, setCollapsed] = useState<Set<string>>(new Set());
   // "" = everyone; otherwise a member key — seeded from the directory.
@@ -360,7 +358,7 @@ export function DiagramView({
           >
             {expanded ? <ChevronDown size={13} /> : <ChevronRight size={13} />}
           </button>
-          <span style={{ width: 8, height: 8, borderRadius: 999, flexShrink: 0, background: PRIORITY_DOT[t.priority] }} title={PRIORITY_LABEL[t.priority]} />
+          <PriorityBadge priority={t.priority} />
           <span title={t.title} style={{ fontSize: "var(--text-sm)", fontWeight: 500, color: "var(--text-strong)", textDecoration: open ? "none" : "line-through", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
             {t.title}
           </span>
@@ -383,7 +381,7 @@ export function DiagramView({
                     }
                   >
                     <span style={{ fontSize: "var(--text-xs)", ...(item.done ? { textDecoration: "line-through", color: "var(--text-subtle)" } : {}) }}>
-                      {tr ? tr(item.text) : item.text}
+                      {item.text}
                     </span>
                   </Checkbox>
                 </div>
@@ -612,12 +610,13 @@ export function DiagramView({
           key: p.id,
           projectId: p.id,
           groupTasks: children,
-          // 폴더 색 = 프로젝트 우선순위 (urgent 빨강 / high 주황 / medium 파랑 / low 회색)
+          // Folder colors use the same priority palette as task labels.
           headerColor: PRIORITY_DOT[p.priority],
           header: (
             <>
               <FolderKanban size={16} style={{ color: PRIORITY_DOT[p.priority] ?? "var(--color-primary)" }} />
               <span style={{ fontWeight: 600, color: "var(--text-strong)" }}>{p.name}</span>
+              <PriorityBadge priority={p.priority} />
               {p.ownerKey && <UserAvatar memberKey={p.ownerKey} size="xs" photo={false} />}
               <span style={{ fontSize: "var(--text-xs)", color: "var(--text-muted)", fontVariantNumeric: "tabular-nums" }}>
                 {r.done}/{r.total} · {r.pct}%

@@ -6,20 +6,18 @@ import { Button } from "@/components/ds/core/Button";
 import { EmptyState } from "@/components/ds/feedback/EmptyState";
 import type { PmProject, PmTask } from "@/types/domain";
 import { pmToday } from "@/lib/data/pm";
-import { compareTasks } from "./pmFormat";
+import { compareTasks, PRIORITY_COLOR, PRIORITY_LABEL } from "./pmFormat";
+import { PriorityBadge } from "./PriorityBadge";
 
 /* Roadmap — Jira-style timeline: one bar per task from its start date
    (auto-set at creation, editable in the drawer) to its due date. Tasks are
-   grouped under project header rows; each project gets its own bar colour.
+   grouped under project header rows; bar colors show task priority.
    Bars/titles open the task drawer. All sprints appear here — the roadmap is
    the cross-sprint time view. */
 
 const PX_PER_DAY = 18;
 const LABEL_W = 220;
 const ROW_H = 34;
-
-/** Jira-ish project palette, cycled by project order. */
-const PALETTE = ["#343434", "#555555", "#777777", "#444444", "#666666", "#888888", "#999999"];
 
 function parseDay(s: string): number {
   return Math.floor(new Date(s + "T00:00:00").getTime() / 86400000);
@@ -84,16 +82,16 @@ export function RoadmapView({
       { project: null, tasks: shown.filter((t) => t.projectId === null || !projects.some((p) => p.id === t.projectId && p.status !== "archived")) },
     ];
     let lo = today, hi = today;
-    groups.forEach((g, gi) => {
+    groups.forEach((g) => {
       if (g.tasks.length === 0 && !g.project) return;
-      const color = g.project ? PALETTE[gi % PALETTE.length] : "var(--gray-500)";
+      const color = g.project ? PRIORITY_COLOR[g.project.priority] : "var(--gray-500)";
       rows.push({ kind: "project", key: g.project?.id ?? "none", label: g.project?.name ?? "misc.", color });
       [...g.tasks].sort((a, b) => startOf(a) - startOf(b) || compareTasks(a, b)).forEach((t) => {
         const s = startOf(t);
         const e = endOf(t);
         lo = Math.min(lo, s);
         hi = Math.max(hi, e);
-        rows.push({ kind: "task", key: t.id, label: t.title, color, task: t, start: s, end: e });
+        rows.push({ kind: "task", key: t.id, label: t.title, color: PRIORITY_COLOR[t.priority], task: t, start: s, end: e });
       });
     });
     return { rows, minDay: lo - 3, maxDay: hi + 10 };
@@ -217,9 +215,10 @@ export function RoadmapView({
                   title={r.label}
                   style={{ width: LABEL_W, flexShrink: 0, position: "sticky", left: 0, zIndex: 3, background: "var(--surface-card)", borderRight: "1px solid var(--border-subtle)", padding: "0 10px 0 24px", height: "100%", display: "flex", alignItems: "center", cursor: "pointer" }}
                 >
+                  <PriorityBadge priority={r.task!.priority} />
                   <span
                     style={{
-                      fontSize: "var(--text-xs)", color: r.task!.status === "done" ? "var(--text-subtle)" : "var(--text-default)",
+                      marginLeft: 6, fontSize: "var(--text-xs)", color: r.task!.status === "done" ? "var(--text-subtle)" : "var(--text-default)",
                       textDecoration: r.task!.status === "done" ? "line-through" : undefined,
                       overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap",
                     }}
@@ -233,7 +232,7 @@ export function RoadmapView({
                     tabIndex={0}
                     onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); onOpen(r.key); } }}
                     onClick={() => onOpen(r.key)}
-                    title={`${r.label} · ${r.task!.startedOn ?? r.task!.createdAt.slice(0, 10)} → ${r.task!.dueDate ?? "no due date"}`}
+                    title={`${r.label} (${PRIORITY_LABEL[r.task!.priority]}) · ${r.task!.startedOn ?? r.task!.createdAt.slice(0, 10)} → ${r.task!.dueDate ?? "no due date"}`}
                     style={{
                       position: "absolute",
                       top: 8,

@@ -17,7 +17,6 @@ import {
   type PmProjectInput, type PmTaskInput,
 } from "@/lib/data/pm";
 
-import { fetchPmI18n, needsTranslation, textKeyUuid, upsertPmI18n, type PmI18nRow, type PmLang } from "@/lib/data/pmI18n";
 import { notifyByEmail, notifyMentions } from "@/lib/mentions";
 import { isOverdue, rollup } from "./pmFormat";
 import { useMobile } from "@/lib/hooks/useMobile";
@@ -44,7 +43,7 @@ const PM_TEAMS: { key: PmTeam; label: string }[] = [
   { key: "business", label: "Business" },
 ];
 
-export function SprintWorkspace({ translation }: { translation: { ready: boolean; required: string[] } }) {
+export function SprintWorkspace() {
   const me = useCurrentUser();
   // Directory members resolve to u-* keys (currentUser DIRECTORY); externals get ext-*.
   const meKey = me.id;
@@ -65,15 +64,6 @@ export function SprintWorkspace({ translation }: { translation: { ready: boolean
     const saved = window.localStorage.getItem("pm.team");
     return visibleTeams.some((t) => t.key === saved) ? (saved as PmTeam) : fallback;
   });
-  // 표시 언어 (EN ↔ 한 슬라이드 토글): 어떤 언어로 작성됐든 선택 언어로 표시.
-  // 이미 그 언어인 제목은 그대로, 아니면 pm_i18n 번역 캐시로 치환.
-  const [lang, setLang] = useState<PmLang>(() => {
-    if (typeof window === "undefined") return "ko";
-    const saved = window.localStorage.getItem("pm.lang");
-    return saved === "en" ? "en" : "ko";
-  });
-  const [i18n, setI18n] = useState<PmI18nRow[]>([]);
-  const translationBlocked = useRef(false);
   const [drawerTaskId, setDrawerTaskId] = useState<string | null>(null);
   const [drawerProjectId, setDrawerProjectId] = useState<string | null>(null);
   // 태스크 드로어를 프로젝트 드로어에서 열었을 때의 "뒤로" 목적지.
@@ -185,154 +175,20 @@ export function SprintWorkspace({ translation }: { translation: { ready: boolean
     try { window.localStorage.setItem("pm.team", next); } catch { /* private mode */ }
   }
 
-  function switchLang(next: PmLang) {
-    translationBlocked.current = false;
-    setLang(next);
-    try { window.localStorage.setItem("pm.lang", next); } catch { /* private mode */ }
-    if (!translation.ready) {
-      setToast({ tone: "danger", title: "Translate", text: `Translation setup required: configure your own ${translation.required.join(", ")} as server environment variables. INTEGRATION_OWNER_ID must match your signed-in user ID. Original text remains visible.` });
-    }
-  }
-
-  // 번역 캐시 로드 (1회)
-  useEffect(() => {
-    fetchPmI18n().then(setI18n).catch(() => {});
-  }, []);
-
-  const i18nMap = useMemo(() => {
-    const m = new Map<string, PmI18nRow>();
-    for (const r of i18n) m.set(`${r.kind}:${r.targetId}:${r.lang}`, r);
-    return m;
-  }, [i18n]);
-
-  // kind='text' 행(체크리스트 항목·프로젝트 설명 등)은 원문 자체로 조회
-  const textTrMap = useMemo(() => {
-    const m = new Map<string, string>();
-    for (const r of i18n) if (r.kind === "text") m.set(`${r.lang}|${r.source}`, r.text);
-    return m;
-  }, [i18n]);
-
-  /** 표시 제목: 번역 대상이면 캐시(원문 일치 시)에서, 아니면 원문. */
-  const displayText = (kind: "task" | "project", id: string, text: string): string => {
-    if (!needsTranslation(text, lang)) return text;
-    const hit = i18nMap.get(`${kind}:${id}:${lang}`);
-    return hit && hit.source === text ? hit.text : text; // 번역 도착 전엔 원문
-  };
-
-  /** 임의 문자열(체크리스트·설명)의 표시 번역 — 렌더 전용, 저장 데이터는 원문 유지. */
-  const trText = useMemo(() => {
-    return (text: string): string => {
-      const s = (text ?? "").trim();
-      if (!s || !needsTranslation(s, lang)) return text;
-      return textTrMap.get(`${lang}|${s}`) ?? text;
-    };
-  }, [lang, textTrMap]);
-
-  // 언어 토글 시: 캐시에 없거나 원문이 바뀐 항목만 일괄 번역 → 캐시에 저장.
-  // 제목·프로젝트명(kind task/project) + 체크리스트·설명(kind text)을 100개씩
-  // 나눠 요청해 API 상한(200)에 걸려 일부만 번역되는 일이 없게 한다.
-  useEffect(() => {
-    if (loading || !translation.ready || translationBlocked.current) return;
-    const pending: { id: string; kind: "task" | "project"; text: string }[] = [];
-    for (const t of tasks) {
-      if (!needsTranslation(t.title, lang)) continue;
-      const hit = i18nMap.get(`task:${t.id}:${lang}`);
-      if (!hit || hit.source !== t.title) pending.push({ id: t.id, kind: "task", text: t.title });
-    }
-    for (const pr of projects) {
-      if (!needsTranslation(pr.name, lang)) continue;
-      const hit = i18nMap.get(`project:${pr.id}:${lang}`);
-      if (!hit || hit.source !== pr.name) pending.push({ id: pr.id, kind: "project", text: pr.name });
-    }
-    // 임의 문자열: 같은 내용은 한 번만 (원문으로 dedupe)
-    const textPending = new Set<string>();
-    const wantText = (raw: string) => {
-      const s = (raw ?? "").trim();
-      if (!s || !needsTranslation(s, lang)) return;
-      if (textTrMap.has(`${lang}|${s}`)) return;
-      textPending.add(s);
-    };
-    for (const t of tasks) for (const c of t.checklist) wantText(c.text);
-    for (const pr of projects) wantText(pr.description);
-    if (pending.length === 0 && textPending.size === 0) return;
-
-    let cancelled = false;
-    (async () => {
-      try {
-        // id 부여: task/project는 "kind:uuid", text는 "text:<원문해시 uuid>"
-        const items: { id: string; kind: "task" | "project" | "text"; source: string; targetId: string }[] =
-          pending.map((x) => ({ id: `${x.kind}:${x.id}`, kind: x.kind, source: x.text, targetId: x.id }));
-        for (const s of textPending) {
-          const key = await textKeyUuid(s);
-          items.push({ id: `text:${key}`, kind: "text", source: s, targetId: key });
-        }
-
-        const translated = new Map<string, string>(); // id → 번역문
-        for (let i = 0; i < items.length; i += 100) {
-          const chunk = items.slice(i, i + 100);
-          const res = await fetch("/api/pm/translate", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ target: lang, items: chunk.map((x) => ({ id: x.id, text: x.source })) }),
-          });
-          const json = await res.json() as {detail?:string;error?:string;items?:{id:string;text:string}[];assignments?:{taskId:string;projectId:string}[]};
-          if (!res.ok) {
-            if (res.status === 503) translationBlocked.current = true;
-            throw new Error(json.detail || json.error || `HTTP ${res.status}`);
-          }
-          for (const it of json.items ?? []) translated.set(String(it.id), String(it.text ?? ""));
-          if (cancelled) return;
-        }
-
-        const rows: PmI18nRow[] = [];
-        for (const it of items) {
-          const text = translated.get(it.id);
-          if (!text) continue;
-          rows.push({ kind: it.kind, targetId: it.targetId, lang, source: it.source, text });
-        }
-        if (cancelled || rows.length === 0) return;
-
-        // DB 캐시는 kind별로 나눠 저장 — 'text'는 신규 SQL(2026-08-05c) 미실행 환경에서
-        // 제약 오류가 나므로, 실패해도 제목 캐시와 이번 세션 표시는 유지한다.
-        const baseRows = rows.filter((r) => r.kind !== "text");
-        const textRows = rows.filter((r) => r.kind === "text");
-        try { await upsertPmI18n(baseRows); } catch (err) { console.error("pm_i18n save failed:", err); }
-        try { await upsertPmI18n(textRows); } catch (err) {
-          console.error("pm_i18n(text) save failed. Run 2026-08-05c SQL:", err);
-        }
-        if (cancelled) return;
-        setI18n((prev) => [
-          ...prev.filter((r) => !rows.some((n) => n.kind === r.kind && n.targetId === r.targetId && n.lang === r.lang)),
-          ...rows,
-        ]);
-      } catch (err) {
-        if (cancelled) return;
-        console.error("pm translate failed:", err);
-        setToast({ tone: "danger", title: "Translate", text: err instanceof Error ? err.message : "Translation failed" });
-      }
-    })();
-    return () => { cancelled = true; };
-    // i18nMap/textTrMap은 자체 갱신 결과라 의존성에서 제외 (재귀 방지 — pending 산출에만 사용)
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [lang, loading, tasks, projects, translation.ready]);
-
-  // 현재 팀 파티션 — 모든 뷰/폼은 이 목록만 본다 (드로어 조회는 전체 유지).
-  // lang 토글이 켜져 있으면 제목·프로젝트명을 번역본으로 치환해 뷰에 전달
-  // (드로어/폼 편집은 원문 그대로 — 저장 데이터는 불변).
-  // private 프로젝트는 owner·co-owner·지정 멤버·admin 외에는 목록·보드·캘린더 어디에도 안 보인다.
+  // Views preserve user-authored text; stored legacy translation rows remain compatible.
   const hiddenProjectIds = useMemo(
     () => new Set(projects.filter((p) => !canSeeProject(p, me.id, me.role === "admin")).map((p) => p.id)),
     [projects, me.id, me.role],
   );
   const teamProjects = useMemo(
-    () => projects.filter((p) => p.team === team && !hiddenProjectIds.has(p.id)).map((p) => ({ ...p, name: displayText("project", p.id, p.name) })),
+    () => projects.filter((p) => p.team === team && !hiddenProjectIds.has(p.id)),
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [projects, team, lang, i18nMap, hiddenProjectIds],
+    [projects, team, hiddenProjectIds],
   );
   const teamTasks = useMemo(
-    () => tasks.filter((t) => t.team === team && (!t.projectId || !hiddenProjectIds.has(t.projectId))).map((t) => ({ ...t, title: displayText("task", t.id, t.title) })),
+    () => tasks.filter((t) => t.team === team && (!t.projectId || !hiddenProjectIds.has(t.projectId))),
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [tasks, team, lang, i18nMap, hiddenProjectIds],
+    [tasks, team, hiddenProjectIds],
   );
 
   /** Tasks of non-archived projects (+ tasks without a project). Archiving a
@@ -771,32 +627,6 @@ export function SprintWorkspace({ translation }: { translation: { ready: boolean
           items={visibleTeams.map((t) => ({ value: t.key, label: t.label }))}
         />
         )}
-        {/* 표시 언어 슬라이드 토글: EN ↔ 한 (번역은 pm_i18n 캐시 공유) */}
-        {!mobile && <button
-          type="button"
-          role="switch"
-          aria-checked={lang === "ko"}
-          aria-label="Toggle display language"
-          className="sx-sprint-language"
-          onClick={() => switchLang(lang === "ko" ? "en" : "ko")}
-          style={{
-            position: "relative", display: "grid", gridTemplateColumns: "1fr 1fr", alignItems: "center",
-            width: 96, height: 32, padding: 3, border: "none", cursor: "pointer",
-            background: "var(--surface-sunken)", borderRadius: 999, fontFamily: "var(--font-sans)",
-          }}
-        >
-          <span
-            aria-hidden
-            style={{
-              position: "absolute", top: 3, bottom: 3, left: 3, width: "calc(50% - 3px)",
-              borderRadius: 999, background: "var(--surface-card)", boxShadow: "0 1px 3px rgba(0,0,0,.14)",
-              transform: lang === "ko" ? "translateX(100%)" : "translateX(0)",
-              transition: "transform 180ms var(--ease-out, ease-out)",
-            }}
-          />
-          <span style={{ position: "relative", zIndex: 1, fontSize: "var(--text-xs)", fontWeight: 700, color: lang === "en" ? "var(--text-strong)" : "var(--text-subtle)", transition: "color 180ms" }}>EN</span>
-          <span style={{ position: "relative", zIndex: 1, fontSize: "var(--text-xs)", fontWeight: 700, color: lang === "ko" ? "var(--text-strong)" : "var(--text-subtle)", transition: "color 180ms" }}>한</span>
-        </button>}
         <span className="sx-desktop-only" style={{ fontSize: "var(--text-sm)", color: "var(--text-muted)" }}>
           {r.total > 0 ? `${r.done}/${r.total} tasks done` : "Organize work by project · tasks, daily logs and folders live inside."}
         </span>
@@ -820,10 +650,6 @@ export function SprintWorkspace({ translation }: { translation: { ready: boolean
             <option value="list">Task list</option><option value="board">Board</option><option value="projects">Projects</option>
             <option value="calendar">Calendar</option><option value="due">Due</option><option value="people">People</option>
             <option value="roadmap">Roadmap</option><option value="diagram">Diagram</option>
-          </select>
-          <label htmlFor="sprint-language">Language</label>
-          <select id="sprint-language" value={lang} onChange={(e) => switchLang(e.target.value as PmLang)}>
-            <option value="ko">한국어</option><option value="en">English</option>
           </select>
           <Button variant="ghost" size="sm" leftIcon={<FolderKanban size={14} />} onClick={() => { setOptionsOpen(false); setProjectForm({ project: null }); }}>New project</Button>
         </div>
@@ -861,7 +687,6 @@ export function SprintWorkspace({ translation }: { translation: { ready: boolean
             onReorderProject={reorderProject}
             onAutoAssign={() => void autoAssignOrphans()}
             autoAssignBusy={autoAssignBusy}
-            tr={trText}
           />
         )}
         {view === "board" && (
@@ -880,7 +705,6 @@ export function SprintWorkspace({ translation }: { translation: { ready: boolean
             onNew={() => setProjectForm({ project: null })}
             onEdit={(p) => openProject(p.id)}
             onReorder={reorderProject}
-            tr={trText}
           />
         )}
       </div>

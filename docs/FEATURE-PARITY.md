@@ -15,7 +15,8 @@ Source: original `src/components/pm/SprintWorkspace.tsx` and its direct/transiti
 | Members and project visibility/co-owners | Empty user-owned member directory and original selectors | User-created directory API; account isolation, no cross-account invitations |
 | Attachments and memo images | Original file UI; authenticated R2 API | Real R2 upload/download byte check passed |
 | Drive browse/scaffold | Real Google Drive HTTP adapter | Missing-config error implemented; full URL/ID parser tested; no external calls |
-| Korean/English cached translation | Original toggle/cache; real provider adapter | Missing-key HTTP 503 verified; provider response QA awaits own credentials |
+| English system UI and original authored text | Language toggle and automatic content translation removed as requested; legacy cache/API remain compatible | DOM regression verifies English tabs, unchanged Korean-authored text, no translation requests on load/polling |
+| Sky-blue theme and semantic priority | Shared red Urgent / orange High / amber Medium / blue Low palette; visible labels and flag icons across task views and detail controls | Rendered labels, calendar bar text and detail palette verified for all four priorities |
 | AI work order / project assignment | Original actions; real provider adapter | Missing-key HTTP 503 verified; provider response QA awaits own credentials |
 | Email / in-service notifications | Original triggers; server adapters and stored status | Stored in-service notices; owner-gated Resend adapter; mail untested without own credentials |
 | Live changes | Authenticated periodic fetch replaces corporate Supabase realtime | 15-second polling implemented; browser timing QA pending |

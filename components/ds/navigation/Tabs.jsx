@@ -30,7 +30,7 @@ const CSS = `
 .sx-tabs--enclosed .sx-tab { height: 30px; border-radius: var(--radius-sm); color: var(--text-muted); }
 .sx-tabs--enclosed .sx-tab:hover { color: var(--text-default); }
 .sx-tab:focus-visible { outline: none; box-shadow: var(--ring-focus); border-radius: var(--radius-sm); }
-.sx-tabs--enclosed .sx-tab--active { background: var(--surface-card); color: var(--text-strong); box-shadow: var(--shadow-xs); font-weight: var(--weight-semibold); }
+.sx-tabs--enclosed .sx-tab--active { background: var(--blue-100); color: var(--color-primary); box-shadow: var(--shadow-xs); font-weight: var(--weight-semibold); }
 .sx-tabs--enclosed .sx-tab__underline { display: none; }
 `;
 

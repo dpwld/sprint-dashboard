@@ -1,6 +1,8 @@
 # Sprint Dashboard
 
-Sprint Dashboard is a private web service for projects, tasks, daily logs and deadlines, with eight connected views and a monochrome interface.
+English · [한국어](README.ko.md)
+
+Sprint Dashboard is a web service for projects, tasks, daily logs and deadlines, with eight connected views and a bright sky-blue interface and English system labels.
 
 [Requirements](#prerequisites-and-your-data) · [Quickstart](#local-setup) · [Workflows](#workflows) · [Architecture](#architecture-and-verification) · [Feature inventory](docs/FEATURE-PARITY.md)
 
@@ -15,14 +17,14 @@ The runtime database starts empty. No company accounts, employees, project recor
 | Requirement | Required for | Setup |
 |---|---|---|
 | Node.js 22.13+ and npm | Local development and build | Install a supported Node runtime |
-| Sites ChatGPT authentication | Hosted sign-in and per-user data isolation | Keep the prepared private Site’s identity; hosting supplies authenticated identity |
+| Production authentication | Sign-in and per-user data isolation | Cloudflare Access for your own deployment; Sites identity on Sites |
 | D1 binding `DB` | All tasks, projects, comments, members, logs and settings | Already declared in `.openai/hosting.json`; apply migrations locally |
 | R2 binding `BUCKET` | Attachments and embedded memo images | Declared in `.openai/hosting.json`; Sites provisions hosted storage |
 | `INTEGRATION_OWNER_ID`, `GOOGLE_ACCESS_TOKEN`, `GOOGLE_DRIVE_ROOT_ID` | Google Drive folder browsing, creation and moves | Your own OAuth access token with Drive access and your own root folder ID |
-| `INTEGRATION_OWNER_ID`, `OPENAI_API_KEY`, `OPENAI_MODEL` | Korean/English translation, AI work orders and project assignment | Your own API account and explicitly selected compatible model |
+| `INTEGRATION_OWNER_ID`, `OPENAI_API_KEY`, `OPENAI_MODEL` | AI work orders and project assignment | Your own API account and explicitly selected compatible model |
 | `INTEGRATION_OWNER_ID`, `RESEND_API_KEY`, `MAIL_FROM` | Actual assignment and mention email delivery | Your own Resend account and verified sender domain |
 
-Core planning, all eight views, comments, reactions, daily logs, members, checklist/memo editing and undo work without external API keys. Attachments require R2. Drive, translation, AI and email remain unavailable until their own credentials are configured; errors name the missing setup. No integrations fabricate a successful result.
+Core planning, all eight views, comments, reactions, daily logs, members, checklist/memo editing and undo work without external API keys. Attachments require R2. Drive, AI and email remain unavailable until their own credentials are configured; errors name the missing setup. No integrations fabricate a successful result.
 
 Configure secrets only in deployment server environment variables. For local development create an ignored `.dev.vars` with only your own credentials. Never commit it. `INTEGRATION_OWNER_ID` must equal the signed-in user ID displayed under **Settings → External connections**. Server integration credentials are restricted to that owner. Other users retain independent core workspaces but cannot use that owner’s integrations. Google access tokens expire; this release requires replacing the token and does not yet provide an OAuth refresh/consent UI.
 
@@ -40,11 +42,15 @@ There is no CSV/XLSX import endpoint. The Grant Project handoff is an authentica
 ## Local setup
 
 ```sh
+git clone https://github.com/dpwld/sprint-dashboard.git
+cd sprint-dashboard
 npm ci
-npm run build
-npm run db:migrate
+npm run setup
 npm run dev -- --port 4314
 ```
+
+Local setup needs no ChatGPT account or paid API keys. The repository is currently private, so cloning requires access. `npm run setup` builds the service and applies committed local migrations without seeding data. See [Installation](docs/INSTALLATION.md), [Self-hosting in your own Cloudflare account](docs/SELF-HOSTING.md), and [Contributing](CONTRIBUTING.md).
+
 
 Use the printed loopback URL and the development sign-in flow. The Sites starter’s mock sign-in is local only. `npm start -- --port 4314` runs the built Worker with local D1/R2 but does not itself simulate sign-in. Both modes persist local storage under `.wrangler/state`. Hosted D1 is a separate database; Sites applies committed migrations at deployment.
 
@@ -58,10 +64,12 @@ node scripts/screenshot-fixture.mjs seed
 node scripts/screenshot-fixture.mjs cleanup
 ```
 
-The helper is fixed to `http://127.0.0.1:4314`, rejects redirects and uses the actual authenticated API/D1. It creates three fictional projects, 15 tasks, four directory members, six daily logs and three comments. Names are invented and emails use reserved `.example` domains. The created IDs are recorded in ignored `.wrangler/screenshot-fixture.json`; cleanup uses only that list and preserves unrelated records. It never calls email, AI or other external integrations. Keep the manifest until cleanup is complete.
+The helper is fixed to `http://127.0.0.1:4314`, rejects redirects and uses the actual authenticated API/D1. It creates three fictional projects, 15 tasks covering all four priorities, four directory members, six daily logs and three comments. Names are invented and emails use reserved `.example` domains. The created IDs are recorded in ignored `.wrangler/screenshot-fixture.json`; cleanup uses only that list and preserves unrelated records. It never calls email, AI or other external integrations. Keep the manifest until cleanup is complete.
 
 ## Workflows
 
+- Priority keeps the same meaning throughout the views and detail drawers: red **Urgent**, orange **High**, amber **Medium** and blue **Low**. Visible labels accompany the colors; completion uses green.
+- System UI is English. User-authored content keeps its original language; old `pm.lang` preferences no longer change the display or trigger automatic translation. Existing translation cache records and API contracts are retained for compatibility.
 - Move among List, Diagram, Board, Roadmap, Calendar, Due, People and Projects. Engineering, Manufacturing and Business remain separate team partitions.
 - Create a project, then add tasks with an assignee, priority and dates. Edit objective, checkpoint, completion criteria, checklist and memo in the task drawer.
 - Drag tasks between project groups or board columns. Project rollups derive from actual task status. Archived projects leave the active working views.

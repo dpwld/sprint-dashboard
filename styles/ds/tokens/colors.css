@@ -1,17 +1,21 @@
 
 
 :root {
+  --priority-urgent: #b91c1c;
+  --priority-high: #c2410c;
+  --priority-medium: #a16207;
+  --priority-low: #0369a1;
   
-  --blue-50:  #f4f4f4;
-  --blue-100: #e7e7e7;
-  --blue-200: #cfcfcf;
-  --blue-300: #aeaeae;
-  --blue-400: #848484;
-  --blue-500: #616161;   
-  --blue-600: #4e4e4e;   
-  --blue-700: #404040;   
-  --blue-800: #373737;
-  --blue-900: #2d2d2d;
+  --blue-50:  #f0f9ff;
+  --blue-100: #e0f2fe;
+  --blue-200: #bae6fd;
+  --blue-300: #7dd3fc;
+  --blue-400: #38bdf8;
+  --blue-500: #0284c7;
+  --blue-600: #0369a1;
+  --blue-700: #075985;
+  --blue-800: #0c4a6e;
+  --blue-900: #082f49;
 
   
   --gray-0:   #ffffff;
@@ -20,47 +24,47 @@
   --gray-100: #f4f4f4;
   --gray-200: #e4e4e4;
   --gray-300: #d4d4d4;
-  --gray-400: #a2a2a2;
-  --gray-500: #727272;
+  --gray-400: #64748b;
+  --gray-500: #64748b;
   --gray-600: #535353;
   --gray-700: #404040;
   --gray-800: #272727;
   --gray-900: #181818;
 
   
-  --cool-50:  #f8f8f8;
-  --cool-100: #f1f1f1;
+  --cool-50:  #f0f9ff;
+  --cool-100: #e0f2fe;
 
   
-  --green-50:  #f6f6f6;
-  --green-100: #ebebeb;
-  --green-500: #9f9f9f;   
-  --green-600: #808080;   
-  --green-700: #5f5f5f;
+  --green-50:  #f0fdf4;
+  --green-100: #dcfce7;
+  --green-500: #16a34a;
+  --green-600: #15803d;
+  --green-700: #166534;
 
-  --amber-50:  #f7f7f7;
-  --amber-100: #eeeeee;
-  --amber-500: #adadad;   
-  --amber-600: #808080;   
-  --amber-700: #5f5f5f;
+  --amber-50:  #fffbeb;
+  --amber-100: #fef3c7;
+  --amber-500: #d97706;
+  --amber-600: #b45309;
+  --amber-700: #92400e;
 
-  --red-50:  #ededed;
-  --red-100: #dbdbdb;
-  --red-500: #414141;     
-  --red-600: #383838;     
-  --red-700: #2e2e2e;
-
-  
-  --thermal-hot:  #7c7c7c;
-  --thermal-cold: #8f8f8f;
+  --red-50:  #fef2f2;
+  --red-100: #fee2e2;
+  --red-500: #dc2626;
+  --red-600: #b91c1c;
+  --red-700: #991b1b;
 
   
+  --thermal-hot:  #ea580c;
+  --thermal-cold: #0284c7;
 
   
-  --color-primary:        var(--blue-500);
-  --color-primary-hover:  var(--blue-600);
-  --color-primary-active: var(--blue-700);
-  --color-primary-soft:   var(--blue-50);
+
+  
+  --color-primary:        var(--blue-600);
+  --color-primary-hover:  var(--blue-700);
+  --color-primary-active: var(--blue-800);
+  --color-primary-soft:   var(--blue-100);
   --color-primary-soft-hover: var(--blue-100);
   --color-primary-soft-text:  var(--blue-700);
   --on-primary:           #ffffff;
@@ -76,20 +80,20 @@
   
   --surface-page:    var(--cool-50);
   --surface-card:    var(--gray-0);
-  --surface-sunken:  var(--gray-50);
-  --surface-hover:   var(--gray-100);
-  --surface-active:  var(--gray-200);
+  --surface-sunken:  var(--blue-50);
+  --surface-hover:   var(--blue-50);
+  --surface-active:  var(--blue-100);
   --surface-inverse: var(--gray-900);
 
   
-  --border-subtle:  var(--gray-200);
-  --border-default: #dddddd;
-  --border-strong:  var(--gray-400);
-  --divider:        var(--gray-200);
+  --border-subtle:  var(--blue-100);
+  --border-default: #bae6fd;
+  --border-strong:  var(--blue-300);
+  --divider:        var(--blue-200);
 
   
-  --focus-ring: rgba(26, 102, 255, 0.35);
-  --focus-ring-strong: rgba(26, 102, 255, 0.55);
+  --focus-ring: rgba(2, 132, 199, 0.35);
+  --focus-ring-strong: rgba(2, 132, 199, 0.55);
 
   
   --status-success-text: var(--green-700);

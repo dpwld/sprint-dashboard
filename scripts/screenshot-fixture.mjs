@@ -159,7 +159,10 @@ if (mode === 'cleanup') {
   assert.ok(before.projects.every(project => after.projects.some(row => row.id === project.id)));
   assert.ok(before.tasks.every(task => after.tasks.some(row => row.id === task.id)));
   assert.ok(members.every(member => directory.some(row => row.id === member.id)));
-  assert.equal(new Set(after.tasks.filter(task => task.id.startsWith(manifest.namespace)).map(task => task.status)).size, 5);
+  const createdTasks = after.tasks.filter(task => task.id.startsWith(manifest.namespace));
+  assert.equal(new Set(createdTasks.map(task => task.status)).size, 5);
+  assert.deepEqual([...new Set(createdTasks.map(task => task.priority))].sort(), ['high', 'low', 'medium', 'urgent']);
+  assert.ok(createdTasks.every(task => !/[가-힣]/.test(task.title)), 'README example task titles are English');
   console.log(`Created ${manifest.records.length} fictional records: 3 projects, 15 tasks, 4 members, 6 daily logs and 3 comments.`);
   console.log(`Preview: ${base.origin}/ — choose Engineering and Diagram or Board.`);
   console.log('All names and contacts are invented; email domains are reserved .example domains. No email or external integration was called.');

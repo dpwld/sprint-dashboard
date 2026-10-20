@@ -25,10 +25,10 @@ export const STATUS_COLOR: Record<PmTaskStatus, string> = {
 };
 
 export const PRIORITY_COLOR: Record<PmPriority, string> = {
-  urgent: "var(--red-500, #ef4444)",
-  high: "var(--amber-500, #f59e0b)",
-  medium: "var(--blue-500, #3b82f6)",
-  low: "var(--green-500, #22c55e)",
+  urgent: "var(--priority-urgent, #b91c1c)",
+  high: "var(--priority-high, #c2410c)",
+  medium: "var(--priority-medium, #a16207)",
+  low: "var(--priority-low, #0369a1)",
 };
 
 /** 컬러 필(pill) 인라인 스타일 — 드로어의 상태/우선순위 셀렉트에 씌운다. */
@@ -40,13 +40,6 @@ export function pillStyle(color: string): CSSProperties {
     fontWeight: 600,
     width: "auto",
   };
-}
-
-/** 프로젝트 칩 색 — id 해시로 고정 hue. */
-export function projectHue(id: string): number {
-  let h = 0;
-  for (let i = 0; i < id.length; i++) h = (h * 31 + id.charCodeAt(i)) % 360;
-  return h;
 }
 
 export const STATUS_TONE: Record<PmTaskStatus, BadgeTone> = {
@@ -66,13 +59,8 @@ export const PRIORITY_LABEL: Record<PmPriority, string> = {
   low: "Low",
 };
 
-/** Same dot palette as the Notion snapshot card (home/SprintCard). */
-export const PRIORITY_DOT: Record<PmPriority, string> = {
-  urgent: "var(--red-500)",
-  high: "var(--amber-500)",
-  medium: "var(--blue-500)",
-  low: "var(--gray-400)",
-};
+/** Dots, bars and editable priority pills share the same semantic palette. */
+export const PRIORITY_DOT = PRIORITY_COLOR;
 
 export const PROJECT_STATUS_LABEL: Record<PmProjectStatus, string> = {
   active: "Active",

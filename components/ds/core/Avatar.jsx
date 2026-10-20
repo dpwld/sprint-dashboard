@@ -65,7 +65,7 @@ function hueOf(name) {
 function tintStyle(name) {
   if (!name) return null;
   const h = hueOf(name);
-  return { background: `hsl(${h} 0% 90%)`, color: `hsl(${h} 0% 32%)` };
+  return { background: `hsl(${h} 55% 92%)`, color: `hsl(${h} 45% 30%)` };
 }
 
 export function Avatar({

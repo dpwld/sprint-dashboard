@@ -12,7 +12,8 @@ import type { PmProject, PmTask, PmTaskStatus } from "@/types/domain";
 import { TEAM_MEMBERS, memberName } from "@/lib/mock/team";
 import { Select } from "@/components/ds/forms/Select";
 import { Input } from "@/components/ds/forms/Input";
-import { STATUS_LABEL, STATUS_ORDER, STATUS_TONE, STATUS_COLOR, PRIORITY_ORDER, PRIORITY_DOT, PRIORITY_LABEL, dday, pillStyle } from "./pmFormat";
+import { STATUS_LABEL, STATUS_ORDER, STATUS_TONE, STATUS_COLOR, PRIORITY_ORDER, dday, pillStyle } from "./pmFormat";
+import { PriorityBadge } from "./PriorityBadge";
 import { Avatar } from "@/components/ds/core/Avatar";
 
 /** 아바타만 보이는 담당자 픽커 — 네이티브 셀렉트를 투명하게 겹친다. */
@@ -96,7 +97,7 @@ export function TaskList({
       sortable: true,
       render: (t) => (
         <span style={{ display: "inline-flex", alignItems: "center", gap: 8, minWidth: 0 }}>
-          <span style={{ width: 8, height: 8, borderRadius: 999, flexShrink: 0, background: PRIORITY_DOT[t.priority] }} title={PRIORITY_LABEL[t.priority]} />
+          <PriorityBadge priority={t.priority} />
           <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }} title={t.title}>{t.title}</span>
                         {t.status !== "done" && unmetSprintRules(t).length > 0 && (
                           <span title={"Sprint rules unmet:\n" + unmetSprintRules(t).join("\n")}

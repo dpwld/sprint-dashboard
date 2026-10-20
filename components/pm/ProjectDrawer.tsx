@@ -160,7 +160,8 @@ function ProjectDrawerInner({
           </span>
           <Select
             size="sm"
-            className="sx-ghost"
+            className="sx-ghost sx-priority-select"
+            aria-label="Priority"
             value={project.priority}
             options={PRIORITY_ORDER.map((pr) => ({ value: pr, label: PRIORITY_LABEL[pr] }))}
             onChange={(e) => onPatch(project.id, { priority: e.target.value as PmPriority })}

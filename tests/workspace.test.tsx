@@ -2,12 +2,22 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { act } from 'react';
 import { createRoot } from 'react-dom/client';
+import { renderToStaticMarkup } from 'react-dom/server';
 import { parseHTML } from 'linkedom';
 import { SprintWorkspace } from '../components/pm/SprintWorkspace';
+import { MobileTaskList } from '../components/pm/MobileTaskList';
+import { TaskList } from '../components/pm/TaskList';
+import { TaskBoard } from '../components/pm/TaskBoard';
+import { CalendarView } from '../components/pm/CalendarView';
+import { RoadmapView } from '../components/pm/RoadmapView';
+import { DiagramView } from '../components/pm/DiagramView';
+import { TaskDrawer } from '../components/pm/TaskDrawer';
 import { CurrentUserProvider } from '../lib/auth/CurrentUserContext';
 import { taskSchema } from '../lib/server/domain';
+import { pmToday } from '../lib/data/pm';
+import { PRIORITY_COLOR, PRIORITY_DOT } from '../components/pm/pmFormat';
 
-test('unconfigured translation stays silent across polling and only explains setup on explicit language changes', async () => {
+test('English workspace ignores legacy Korean display preference and preserves authored text across polling', async () => {
  const {window, document} = parseHTML('<html><head></head><body><div id="root"></div></body></html>');
  const names = ['window', 'document', 'HTMLElement', 'HTMLIFrameElement', 'Element', 'Node', 'Event', 'localStorage', 'location', 'matchMedia', 'setInterval', 'clearInterval', 'fetch', 'IS_REACT_ACT_ENVIRONMENT'];
  const previous = new Map(names.map(name => [name, Object.getOwnPropertyDescriptor(globalThis, name)]));
@@ -27,9 +37,9 @@ test('unconfigured translation stays silent across polling and only explains set
   fetch: async (url: string) => {
    if (url === '/api/pm/workspace') {
     loads++;
-    return Response.json({projects: [], comments: [], sprints: [], tasks: [{...taskSchema.parse({title: 'Example task'}), id: 'ui-fixture', createdAt: '', updatedAt: ''}]});
+    return Response.json({projects: [], comments: [], sprints: [], tasks: [{...taskSchema.parse({title: '사용자가 작성한 작업'}), id: 'ui-fixture', createdAt: '', updatedAt: ''}]});
    }
-   if (url === '/api/pm/i18n') return Response.json([]);
+   if (url === '/api/pm/i18n') {translations++; return Response.json([]);}
    if (url === '/api/pm/translate') {
     translations++;
     return Response.json({error: 'Configure OPENAI_API_KEY'}, {status: 503});
@@ -41,7 +51,7 @@ test('unconfigured translation stays silent across polling and only explains set
  try {
   await act(async () => root.render(
    <CurrentUserProvider user={{id: 'ui-owner', fullName: 'Fixture User', email: 'fixture@example.test', role: 'admin', team: 'engineer', title: '', avatarUrl: null}}>
-    <SprintWorkspace translation={{ready: false, required: ['INTEGRATION_OWNER_ID', 'OPENAI_API_KEY', 'OPENAI_MODEL']}}/>
+    <SprintWorkspace/>
    </CurrentUserProvider>,
   ));
   assert.equal(translations, 0);
@@ -51,11 +61,11 @@ test('unconfigured translation stays silent across polling and only explains set
   await act(async () => {poll!();});
   assert.equal(loads, 3);
   assert.equal(translations, 0);
-  const toggle = document.querySelector<HTMLButtonElement>('[aria-label="Toggle display language"]')!;
-  await act(async () => toggle.click());
-  assert.match(document.querySelector('[role="status"]')?.textContent ?? '', /OPENAI_API_KEY/);
-  await act(async () => document.querySelector<HTMLButtonElement>('[aria-label="Dismiss"]')!.click());
-  await act(async () => {poll!();});
+  assert.equal(document.querySelector('[aria-label="Toggle display language"]'), null);
+  assert.equal(document.querySelector('#sprint-language'), null);
+  assert.match(document.body.textContent ?? '', /사용자가 작성한 작업/);
+  const tabs = [...document.querySelectorAll('[role="tab"]')].map(tab => tab.textContent);
+  assert.deepEqual(tabs, ['Engineering', 'Manufacturing', 'Business', 'List', 'Diagram', 'Board', 'Roadmap', 'Calendar', 'Due', 'People', 'Projects0']);
   assert.equal(document.querySelector('[role="status"]'), null);
   assert.equal(translations, 0);
  } finally {
@@ -65,4 +75,46 @@ test('unconfigured translation stays silent across polling and only explains set
    else Reflect.deleteProperty(globalThis, name);
   }
  }
+});
+
+test('priority remains readable without color across task views and uses the same detail palette', () => {
+ const priorities = ['urgent', 'high', 'medium', 'low'] as const;
+ const titles = ['Urgent', 'High', 'Medium', 'Low'];
+ const tasks = priorities.map((priority, index) => ({
+  ...taskSchema.parse({title: `Task ${index + 1}`, priority, assigneeKey: 'ui-owner', dueDate: pmToday(), startedOn: pmToday()}),
+  id: `priority-${priority}`, createdAt: new Date().toISOString(), updatedAt: new Date().toISOString(),
+ }));
+ const noop = () => {};
+ const views = [
+  <MobileTaskList tasks={tasks} projects={[]} meKey="ui-owner" onOpen={noop}/>,
+  <RoadmapView tasks={tasks} projects={[]} onOpen={noop}/>,
+  <TaskList tasks={tasks} projects={[]} onOpen={noop}/>,
+  <TaskBoard tasks={tasks} projects={[]} selectedId={null} onSelect={noop} onMove={noop}/>,
+  <DiagramView tasks={tasks} projects={[]} meId="ui-owner" onOpen={noop} onOpenProject={noop} onReorderTask={noop} onPatch={noop} onQuickAddTask={noop} onNewProject={noop} onReorderProject={noop}/>,
+ ];
+ assert.equal(new Set(Object.values(PRIORITY_COLOR)).size, 4);
+ assert.deepEqual(PRIORITY_DOT, PRIORITY_COLOR);
+ for (const view of views) {
+  const {document} = parseHTML(renderToStaticMarkup(view));
+  priorities.forEach((priority, index) => {
+   const badge = document.querySelector(`[aria-label="${titles[index]} priority"]`);
+   assert.equal(badge?.textContent, titles[index]);
+   assert.ok(badge?.querySelector('svg[aria-hidden="true"]'));
+   assert.ok(badge?.getAttribute('style')?.includes(PRIORITY_COLOR[priority]));
+  });
+ }
+ const {document: calendar} = parseHTML(renderToStaticMarkup(<CalendarView tasks={tasks} projects={[]} onOpen={noop}/>));
+ tasks.forEach((task, index) => {
+  const bar = [...calendar.querySelectorAll('button')].find(button => button.getAttribute('title')?.startsWith(`${task.title} (`));
+  assert.equal(bar?.textContent, `${titles[index]} · ${task.title}`);
+  assert.ok(bar?.getAttribute('style')?.includes(PRIORITY_COLOR[task.priority]));
+  const {document: detail} = parseHTML(renderToStaticMarkup(
+   <CurrentUserProvider user={{id: 'ui-owner', fullName: 'Fixture User', email: 'fixture@example.test', role: 'admin', team: 'engineer', title: '', avatarUrl: null}}>
+    <TaskDrawer task={task} projects={[]} comments={[]} onClose={noop} onPatch={noop} onDelete={noop} onConvert={noop} onAddComment={noop} onDeleteComment={noop}/>
+   </CurrentUserProvider>,
+  ));
+  const select = detail.querySelector('select[aria-label="Priority"]');
+  assert.equal(select?.querySelector('option[selected]')?.textContent, titles[index]);
+  assert.ok(select?.parentElement?.getAttribute('style')?.includes(PRIORITY_COLOR[task.priority]));
+ });
 });

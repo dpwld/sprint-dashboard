@@ -7,6 +7,7 @@ import { EmptyState } from "@/components/ds/feedback/EmptyState";
 import { memberName } from "@/lib/mock/team";
 import type { PmProject, PmTask } from "@/types/domain";
 import { compareTasks, dday, isOverdue, STATUS_LABEL, STATUS_TONE } from "./pmFormat";
+import { PriorityBadge } from "./PriorityBadge";
 
 export function MobileTaskList({ tasks, projects, meKey, onOpen }: {
   tasks: PmTask[];
@@ -41,6 +42,7 @@ export function MobileTaskList({ tasks, projects, meKey, onOpen }: {
               <ChevronRight className="sx-mobile-task__chevron" size={18} />
               <span className="sx-mobile-task__meta">
                 <Badge tone={STATUS_TONE[task.status]} dot>{STATUS_LABEL[task.status]}</Badge>
+                <PriorityBadge priority={task.priority} />
                 {due && <span className={due.overdue ? "sx-mobile-task__overdue" : undefined}>{due.label}</span>}
                 {scope === "team" && <span>{task.assigneeKey ? memberName(task.assigneeKey) : "Unassigned"}</span>}
               </span>

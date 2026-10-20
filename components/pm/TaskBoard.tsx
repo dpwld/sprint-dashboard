@@ -6,7 +6,8 @@ import { Badge } from "@/components/ds/core/Badge";
 import { Tag } from "@/components/ds/core/Tag";
 import { unmetSprintRules } from "@/lib/data/pm";
 import type { PmProject, PmTask, PmTaskStatus } from "@/types/domain";
-import { STATUS_ORDER, STATUS_LABEL, STATUS_TONE, PRIORITY_DOT, PRIORITY_LABEL, PRIORITY_COLOR, projectHue, dday, compareTasks } from "./pmFormat";
+import { STATUS_ORDER, STATUS_LABEL, STATUS_TONE, PRIORITY_COLOR, dday, compareTasks } from "./pmFormat";
+import { PriorityBadge } from "./PriorityBadge";
 import { Avatar } from "@/components/ds/core/Avatar";
 import { memberName } from "@/lib/mock/team";
 
@@ -206,7 +207,6 @@ export function TaskBoard({
                   >
                     <CardBody style={{ padding: "9px 12px" }}>
                       <div style={{ display: "flex", alignItems: "flex-start", gap: 7 }}>
-                        <span style={{ width: 7, height: 7, borderRadius: 999, flexShrink: 0, marginTop: 5, background: PRIORITY_DOT[t.priority] }} title={PRIORITY_LABEL[t.priority]} />
                         <span title={t.title} style={{ flex: 1, fontWeight: 600, color: "var(--text-strong)", fontSize: "var(--text-sm)", lineHeight: 1.3, display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden" }}>{t.title}</span>
                         {t.status !== "done" && unmetSprintRules(t).length > 0 && (
                           <span title={"Sprint rules unmet:\n" + unmetSprintRules(t).join("\n")}
@@ -217,14 +217,15 @@ export function TaskBoard({
                         <div style={{ marginTop: 4, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
                           <span style={{
                             fontSize: "var(--text-2xs)", fontWeight: 600, borderRadius: 999, padding: "1px 8px",
-                            background: `hsl(${projectHue(t.projectId ?? "")} 0% 92%)`,
-                            color: `hsl(${projectHue(t.projectId ?? "")} 0% 32%)`,
+                            background: "var(--blue-50)",
+                            color: "var(--blue-700)",
                           }}>
                             {proj}
                           </span>
                         </div>
                       )}
                       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginTop: 6, gap: 6 }}>
+                        <PriorityBadge priority={t.priority} />
                         <span style={{ display: "inline-flex", alignItems: "center", gap: 6, minWidth: 0 }}>
                           {t.assigneeKey ? <Avatar name={memberName(t.assigneeKey)} size="xs" /> : <span style={{ fontSize: "var(--text-xs)", color: "var(--text-subtle)" }}>Unassigned</span>}
                           {t.checklist.length > 0 && (

@@ -11,6 +11,7 @@ import type { PmProject, PmProjectStatus, PmTask } from "@/types/domain";
 import { TEAM_MEMBERS, memberName } from "@/lib/mock/team";
 import { Select } from "@/components/ds/forms/Select";
 import { PROJECT_STATUS_LABEL, PROJECT_STATUS_TONE, rollup, isOverdue, isOpen } from "./pmFormat";
+import { PriorityBadge } from "./PriorityBadge";
 import { Avatar } from "@/components/ds/core/Avatar";
 
 /** 장기 과제 뷰 — 프로젝트 카드에 하위 태스크 rollup %를 표시. 스프린트와
@@ -21,15 +22,12 @@ export function ProjectsView({
   onNew,
   onEdit,
   onReorder,
-  tr,
 }: {
   projects: PmProject[];
   tasks: PmTask[];
   onNew: () => void;
   onEdit: (project: PmProject) => void;
   onReorder: (dragId: string, targetId: string) => void;
-  /** 표시 언어 번역(렌더 전용) — 설명 등에 적용, 저장 데이터는 원문. */
-  tr?: (text: string) => string;
 }) {
   const [dragId, setDragId] = useState<string | null>(null);
   const [dropId, setDropId] = useState<string | null>(null);
@@ -102,11 +100,12 @@ export function ProjectsView({
               <CardBody>
                 <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8 }}>
                   <span style={{ fontWeight: 600, color: "var(--text-strong)" }}>{p.name}</span>
+                  <PriorityBadge priority={p.priority} />
                   <Badge tone={PROJECT_STATUS_TONE[p.status]} dot>{PROJECT_STATUS_LABEL[p.status]}</Badge>
                 </div>
                 {p.description && (
                   <div style={{ fontSize: "var(--text-xs)", color: "var(--text-muted)", marginTop: 4, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-                    {tr ? tr(p.description) : p.description}
+                    {p.description}
                   </div>
                 )}
                 <div style={{ marginTop: 12 }}>
